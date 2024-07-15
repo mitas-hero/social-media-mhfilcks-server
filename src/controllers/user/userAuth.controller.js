@@ -4,6 +4,7 @@ import { ApiResponse } from "../../utils/apiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { uploadFileOnCloudinary } from "../../utils/uploadFileOnCloudinary.js";
 
+
 export const registerUser = asyncHandler(async (req, res) => {
     // get all userData from req.body 
     const { fullName, username, email, password } = req.body;
@@ -33,16 +34,42 @@ export const registerUser = asyncHandler(async (req, res) => {
         fullName, username, email, password, avatar,
         coverImage: coverImage || ""
     }
-    // console.log(userData)
-    // return
+    // create user
     const result = await User.create(userData)
-    const createdUser = await User.findById(result._id).select("-password -refreshToken")
+    // generate access and refresh token
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(result?._id)
+    // find the created user in database
+    const createdUser = await User.findByIdAndUpdate(result._id).select("-password -refreshToken")
     if (!createdUser) {
         throw new ApiError(500, "something went wrong when creating user")
     }
+    // send response
     return res
         .status(200)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
         .json(
             new ApiResponse(200, createdUser)
         )
 })
+
+
+async function generateAccessAndRefreshToken(id) {
+    try {
+        const user = await User.findById(id)
+        const accessToken = await user.generateAccessToken()
+        const refreshToken = await user.generateRefreshToken()
+
+        user.refreshToken = refreshToken
+        await user.save({ validateBeforeSave: false })
+
+        return { accessToken, refreshToken }
+    } catch (err) {
+        throw new ApiError(500, "something went wrong when generateAccessAndRefreshToken")
+    }
+}
+
+const cookieOptions = {
+    httpOnly: true,
+    secure: true
+}
