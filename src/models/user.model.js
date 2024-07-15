@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt"
-import { Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import jwt from "jsonwebtoken"
 
 const userSchema = new Schema(
@@ -27,6 +27,12 @@ const userSchema = new Schema(
         password: {
             type: String,
             required: [true, "password is required"]
+        },
+        avatar: {
+            type: String
+        },
+        coverImage: {
+            type: String
         },
         refreshToken: {
             type: String
