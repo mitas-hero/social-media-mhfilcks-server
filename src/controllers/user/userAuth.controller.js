@@ -5,6 +5,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { uploadFileOnCloudinary } from "../../utils/uploadFileOnCloudinary.js";
 
 
+// register user
 export const registerUser = asyncHandler(async (req, res) => {
     // get all userData from req.body 
     const { fullName, username, email, password } = req.body;
@@ -53,10 +54,44 @@ export const registerUser = asyncHandler(async (req, res) => {
         )
 })
 
+// sign in user
+export const signInUser = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+    if (!email || !password) {
+        throw new ApiError(400, "email and password is required")
+    }
+    // find user in db with this email
+    const dbUser = await User.findOne({ email })
+    if (!dbUser) {
+        throw new ApiError(404, "user not found")
+    }
+    // verify password
+    const isPasswordCorrect = await dbUser.isPasswordCorrect(password)
+    console.log({ isPasswordCorrect })
+    if (!isPasswordCorrect) {
+        throw new ApiError(403, "Invalid Password")
+    }
+    // generate Access And RefreshToken
+    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(dbUser?._id)
 
+    const user = await User.findById(dbUser?._id).select("-password -refreshToken")
+    res
+        .status(200)
+        .cookie("accessToken", accessToken, cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions)
+        .json(
+            new ApiResponse(200, user)
+        )
+})
+
+
+// generate access and refresh token
 async function generateAccessAndRefreshToken(id) {
     try {
         const user = await User.findById(id)
+        if (!user) {
+            throw new ApiError(404, "user not found for generating cookie")
+        }
         const accessToken = await user.generateAccessToken()
         const refreshToken = await user.generateRefreshToken()
 
