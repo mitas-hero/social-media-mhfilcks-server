@@ -31,7 +31,8 @@ const userSchema = new Schema(
             required: [true, "password is required"]
         },
         avatar: {
-            type: String
+            type: String,
+            default: "/default-avatar.jpg"
         },
         coverImage: {
             type: String

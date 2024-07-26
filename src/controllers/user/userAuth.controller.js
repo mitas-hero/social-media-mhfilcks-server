@@ -1,3 +1,5 @@
+import dotenv from "dotenv"
+dotenv.config()
 import { User } from "../../models/user.model.js";
 import { ApiError } from "../../utils/apiError.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
@@ -20,27 +22,16 @@ export const registerUser = asyncHandler(async (req, res) => {
     if (existedUser) {
         throw new ApiError(400, "User already exist")
     }
-    // handle images
-    let avatar;
-    if (!req.files?.avatar) {
-        throw new ApiError(400, "avatar is required")
-    }
-    avatar = await uploadFileOnCloudinary(req.files?.avatar[0]?.path)
-    let coverImage;
-    if (req.files.coverImage) {
-        coverImage = await uploadFileOnCloudinary(req.files.coverImage[0]?.path)
-    }
-
     const userData = {
-        fullName, username, email, password, avatar,
-        coverImage: coverImage || ""
+        fullName, username, email, password
     }
     // create user
     const result = await User.create(userData)
     // generate access and refresh token
-    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(result?._id)
+    const { accessToken } = await generateAccessAndRefreshToken(result?._id)
     // find the created user in database
-    const createdUser = await User.findByIdAndUpdate(result._id).select("-password -refreshToken")
+    // HERE is some issue + limitations
+    const createdUser = await User.findById(result._id).select("-password")
     if (!createdUser) {
         throw new ApiError(500, "something went wrong when creating user")
     }
@@ -48,7 +39,6 @@ export const registerUser = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .cookie("accessToken", accessToken, cookieOptions)
-        .cookie("refreshToken", refreshToken, cookieOptions)
         .json(
             new ApiResponse(200, createdUser)
         )
@@ -67,23 +57,44 @@ export const signInUser = asyncHandler(async (req, res) => {
     }
     // verify password
     const isPasswordCorrect = await dbUser.isPasswordCorrect(password)
-    console.log({ isPasswordCorrect })
+    // console.log({ isPasswordCorrect })
     if (!isPasswordCorrect) {
         throw new ApiError(403, "Invalid Password")
     }
     // generate Access And RefreshToken
-    const { accessToken, refreshToken } = await generateAccessAndRefreshToken(dbUser?._id)
+    const { accessToken } = await generateAccessAndRefreshToken(dbUser?._id)
 
     const user = await User.findById(dbUser?._id).select("-password -refreshToken")
     res
         .status(200)
         .cookie("accessToken", accessToken, cookieOptions)
-        .cookie("refreshToken", refreshToken, cookieOptions)
         .json(
             new ApiResponse(200, user)
         )
 })
 
+// sign out user
+export const signOutUser = asyncHandler(async (req, res) => {
+    res
+        .status(200)
+        .clearCookie("accessToken", cookieOptions)
+        .json(
+            new ApiResponse(200, "sign out success")
+        )
+})
+
+export const getCurrentUser = asyncHandler(asyncHandler(async (req, res) => {
+    const id = req.user?._id;
+    const user = await User.findById(id).select("-password -refreshToken")
+    if (!user) {
+        throw new ApiError(404, "User not found")
+    }
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, user, "fetch current user success")
+        )
+}))
 
 // generate access and refresh token
 async function generateAccessAndRefreshToken(id) {
@@ -93,12 +104,13 @@ async function generateAccessAndRefreshToken(id) {
             throw new ApiError(404, "user not found for generating cookie")
         }
         const accessToken = await user.generateAccessToken()
-        const refreshToken = await user.generateRefreshToken()
+        // const refreshToken = await user.generateRefreshToken()
 
-        user.refreshToken = refreshToken
-        await user.save({ validateBeforeSave: false })
+        // TODO: deal with refresh token later
+        // user.refreshToken = refreshToken
+        // await user.save({ validateBeforeSave: false })
 
-        return { accessToken, refreshToken }
+        return { accessToken }
     } catch (err) {
         throw new ApiError(500, "something went wrong when generateAccessAndRefreshToken")
     }
