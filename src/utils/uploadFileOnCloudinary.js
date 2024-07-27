@@ -17,8 +17,23 @@ export const uploadFileOnCloudinary = async (localFilePath) => {
         })
         console.log("File uploaded on cloudinary:", uploadResult?.secure_url);
         fs.unlinkSync(localFilePath)
-        return uploadResult?.secure_url
+        return uploadResult?.secure_url;
     } catch (err) {
         console.error("Cloudinary upload error:", err);
+        fs.unlinkSync(localFilePath)
+    }
+}
+export const uploadVideoOnCloudinary = async (localFilePath) => {
+    try {
+        if (!localFilePath) return null;
+        const uploadResult = await cloudinary.uploader.upload(localFilePath, {
+            resource_type: 'auto'
+        })
+        console.log("File uploaded on cloudinary:", uploadResult);
+        fs.unlinkSync(localFilePath)
+        return uploadResult
+    } catch (err) {
+        console.error("Cloudinary upload error:", err);
+        fs.unlinkSync(localFilePath)
     }
 }
