@@ -4,9 +4,11 @@ import { v2 as cloudinary } from 'cloudinary';
 import fs from "fs"
 
 cloudinary.config({
-    cloud_name: 'dquqygs9h',
-    api_key: '885459731211326',
-    api_secret: process.env.CLOUDINARY_API_SECRET // Click 'View Credentials' below to copy your API secret
+    // cloud_name: 'dquqygs9h', // mahfuzulmitas
+    // api_key: '885459731211326', // mahfuzulmitas
+    cloud_name: 'dpzythyoi', // next-hero
+    api_key: '385919312376673', // next-hero  
+    api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 export const uploadFileOnCloudinary = async (localFilePath) => {
