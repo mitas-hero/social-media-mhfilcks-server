@@ -22,11 +22,8 @@ const videoSchema = new Schema(
         },
         owner: {
             type: mongoose.Types.ObjectId,
+            ref: "User",
             required: true
-        },
-        likes: {
-            type: Number,
-            default: 0
         },
         views: {
             type: Number,
