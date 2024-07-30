@@ -10,7 +10,42 @@ import { Subscription } from "../../models/Subscribe.model.js";
 
 // .select("title thumbnail likes views createdAt duration owner")
 export const getVideos = asyncHandler(async (req, res) => {
-    const result = await Video.find().sort({ _id: -1 });
+    const result = await Video.aggregate([
+        {
+            $sort: {
+                _id: -1
+            }
+        },
+        {
+            $lookup: {
+                from: "videolikes",
+                localField: "_id",
+                foreignField: "video",
+                as: "videolikes"
+            }
+        },
+        {
+            $addFields: {
+                likeCount: {
+                    $size: {
+                        $filter: {
+                            input: "$videolikes",
+                            as: "likeObj",
+                            cond: {
+                                $eq: [true, "$$likeObj.like"]
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            $unset: "videolikes"
+        }
+    ])
+    if (!result) {
+        throw new ApiError(500, "Something went wrong - fetch videos")
+    }
     res
         .status(200)
         .json(
