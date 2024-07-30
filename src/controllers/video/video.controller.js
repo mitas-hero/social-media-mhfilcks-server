@@ -20,12 +20,12 @@ export const getVideos = asyncHandler(async (req, res) => {
 
 // data for video player page
 // 1
-export const getAVideo = asyncHandler(async (req, res) => {
+export const getVideo = asyncHandler(async (req, res) => {
     const id = req.params.id;
     if (!isValidObjectId(id)) {
         throw new ApiError(400, "Invalid video id")
     }
-    const video = await Video.findById(id).select("video")
+    const video = await Video.findById(id).select("video title")
     res
         .status(200)
         .json(
@@ -143,7 +143,7 @@ export const getAVideoPageData = asyncHandler(async (req, res) => {
         )
 })
 // 3
-export const getCurrentUserActionsOfVideo = asyncHandler(async (req, res) => {
+export const getLikeAndSubscribe = asyncHandler(async (req, res) => {
     const videoId = req.params?.id;
     const userId = req.query?.userId;
     if (!isValidObjectId(videoId) || !isValidObjectId(userId)) {
