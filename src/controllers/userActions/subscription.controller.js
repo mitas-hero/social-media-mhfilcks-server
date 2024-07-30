@@ -12,7 +12,7 @@ export const subscribe = asyncHandler(async (req, res) => {
     if (!isValidObjectId(subscriber) || !isValidObjectId(channel)) {
         throw new ApiError(400, "Invalid object id")
     }
-    const isSubscribed = await Subscription.findOne({ subscribe, channel })
+    const isSubscribed = await Subscription.findOne({ subscriber, channel })
     // if the user already a subscriber: delete subscription
     if (isSubscribed) {
         const result = await Subscription.deleteOne({ subscriber, channel })
