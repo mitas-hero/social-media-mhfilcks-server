@@ -7,6 +7,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { uploadFileOnCloudinary, uploadVideoOnCloudinary } from "../../utils/uploadFileOnCloudinary.js";
 import { VideoLike } from "../../models/Like.model.js";
 import { Subscription } from "../../models/Subscribe.model.js";
+import { User } from "../../models/user.model.js";
 
 // .select("title thumbnail likes views createdAt duration owner")
 export const getVideos = asyncHandler(async (req, res) => {
@@ -64,7 +65,7 @@ export const getVideos = asyncHandler(async (req, res) => {
                 }
             },
             {
-                $unset: ["videolikes", "ownerArr"]
+                $unset: ["videolikes", "ownerArr", "videos"]
             }
         ]
     )
@@ -246,5 +247,93 @@ export const uploadVideo = asyncHandler(async (req, res) => {
         .status(200)
         .json(
             new ApiResponse(200, result, "video created")
+        )
+})
+
+
+// get videos of a channel
+export const getAChannelsVideo = asyncHandler(async (req, res) => {
+    const username = req.params?.username;
+    console.log(username);
+    const userId = await User.findOne({ username }).select("_id")
+    if (!userId) {
+        throw new ApiError(404, "Profile not found")
+    }
+    // find videos
+    const videos = await Video.aggregate(
+        [
+            {
+                $match: {
+                    owner: userId?._id
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "owner",
+                    foreignField: "_id",
+                    as: "ownerArr"
+                }
+            },
+            {
+                $addFields: {
+                    channel: {
+                        fullName: {
+                            $arrayElemAt: ["$ownerArr.fullName", 0]
+                        },
+                        avatar: {
+                            $arrayElemAt: ["$ownerArr.avatar", 0]
+                        },
+                        username: {
+                            $arrayElemAt: ["$ownerArr.username", 0]
+                        }
+                    }
+                }
+            },
+            {
+                $lookup: {
+                    from: "videolikes",
+                    localField: "_id",
+                    foreignField: "video",
+                    as: "videolikes"
+                }
+            },
+            {
+                $addFields: {
+                    likes: {
+                        $size: {
+                            $filter: {
+                                input: "$videolikes",
+                                as: "likeObj",
+                                cond: {
+                                    $eq: [true, "$$likeObj.like"]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $unset: [
+                    "videolikes",
+                    "ownerArr",
+                    "video",
+                    "description"
+                ]
+            },
+            {
+                $sort: {
+                    _id: -1
+                }
+            }
+        ]
+    )
+    if (!videos) {
+        throw new ApiError(500, `something went wrong - getAChannelsVideo`)
+    }
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, videos, "Channels videos fetched")
         )
 })
