@@ -40,6 +40,23 @@ export const updateVideoComment = asyncHandler(async (req, res) => {
             new ApiResponse(200, result, "comment update success")
         )
 })
+
+export const deleteVideoComment = asyncHandler(async (req, res) => {
+    const commentId = req.params.commentId;
+    if (!isValidObjectId(commentId)) {
+        throw new ApiError(400, "Invalid id")
+    }
+    const result = await VideoComment.deleteOne({ _id: new ObjectId(commentId) })
+    if (!result) {
+        throw new ApiError(500, "something went wrong - deleteVideoComment")
+    }
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, result, "comment delete success")
+        )
+})
+
 // get total comment count of a video
 export const countCommentsOfAVideo = asyncHandler(async (req, res) => {
     const id = req.params?.id
