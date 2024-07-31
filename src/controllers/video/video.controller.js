@@ -28,11 +28,14 @@ export const getVideos = asyncHandler(async (req, res) => {
             {
                 $addFields: {
                     channel: {
-                        name: {
+                        fullName: {
                             $arrayElemAt: ["$ownerArr.fullName", 0]
                         },
                         avatar: {
                             $arrayElemAt: ["$ownerArr.avatar", 0]
+                        },
+                        username: {
+                            $arrayElemAt: ["$ownerArr.username", 0]
                         }
                     }
                 }
@@ -123,7 +126,8 @@ export const getAVideoPageData = asyncHandler(async (req, res) => {
                     channel: {
                         channelId: "$channelObj._id",
                         channelName: "$channelObj.fullName",
-                        channelAvatar: "$channelObj.avatar"
+                        channelAvatar: "$channelObj.avatar",
+                        channelUsername: "$channelObj.username",
                     }
                 }
             },
