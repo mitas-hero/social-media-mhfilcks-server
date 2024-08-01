@@ -250,11 +250,9 @@ export const uploadVideo = asyncHandler(async (req, res) => {
         )
 })
 
-
 // get videos of a channel
 export const getAChannelsVideo = asyncHandler(async (req, res) => {
     const username = req.params?.username;
-    console.log(username);
     const userId = await User.findOne({ username }).select("_id")
     if (!userId) {
         throw new ApiError(404, "Profile not found")

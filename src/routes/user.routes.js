@@ -2,7 +2,7 @@ import { Router } from "express";
 import { getCurrentUser, registerUser, signInUser, signOutUser } from "../controllers/user/userAuth.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { updateProfile } from "../controllers/user/user.controller.js";
+import { getIsUserExists, getUserPublicProfile, updateProfile } from "../controllers/user/user.controller.js";
 
 export const userRouter = Router()
 
@@ -18,3 +18,6 @@ userRouter.route("/update-profile/:email").post(
     ]),
     updateProfile
 )
+// get a user's public profile
+userRouter.route("/is-exists/:username").get(getIsUserExists)
+userRouter.route("/public-profile/:channelId").get(getUserPublicProfile)
