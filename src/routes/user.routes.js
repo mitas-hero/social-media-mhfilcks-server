@@ -3,6 +3,7 @@ import { getCurrentUser, registerUser, signInUser, signOutUser } from "../contro
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { getIsUserExists, getUserPublicProfile, updateProfile } from "../controllers/user/user.controller.js";
+import { getLikedVideos } from "../controllers/userActions/like.controller.js";
 
 export const userRouter = Router()
 
@@ -21,3 +22,4 @@ userRouter.route("/update-profile/:email").post(
 // get a user's public profile
 userRouter.route("/is-exists/:username").get(getIsUserExists)
 userRouter.route("/public-profile/:channelId").get(getUserPublicProfile)
+userRouter.route("/liked-videos/:userId").get(getLikedVideos)

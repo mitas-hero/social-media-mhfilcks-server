@@ -3,6 +3,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/apiError.js";
 import { VideoLike } from "../../models/Like.model.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
+import { ObjectId } from "mongodb";
 
 export const handleLikeVideo = asyncHandler(async (req, res) => {
     const { user, video, like } = req.body;
@@ -50,5 +51,105 @@ export const handleLikeVideo = asyncHandler(async (req, res) => {
         .status(200)
         .json(
             new ApiResponse(200, updateResult, `Like status updated, like = ${like}`)
+        )
+})
+
+// get user's liked videos
+export const getLikedVideos = asyncHandler(async (req, res) => {
+    const userId = req.params.userId
+    if (!isValidObjectId(userId)) {
+        throw new ApiError(400, "Invalid user id")
+    }
+    const result = await VideoLike.aggregate(
+        [
+            {
+                $match: {
+                    user: new ObjectId(userId),
+                    like: true
+                }
+            },
+            {
+                $project: {
+                    user: 1,
+                    video: 1,
+                    like: 1
+                }
+            },
+            {
+                $sort: {
+                    _id: -1
+                }
+            },
+            {
+                $lookup: {
+                    from: "videos",
+                    localField: "video",
+                    foreignField: "_id",
+                    as: "videoArr"
+                }
+            },
+            {
+                $addFields: {
+                    video: { $first: "$videoArr" }
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "user",
+                    foreignField: "_id",
+                    as: "ownerArr"
+                }
+            },
+            {
+                $addFields: {
+                    channel: {
+                        fullName: {
+                            $arrayElemAt: ["$ownerArr.fullName", 0]
+                        },
+                        avatar: {
+                            $arrayElemAt: ["$ownerArr.avatar", 0]
+                        },
+                        username: {
+                            $arrayElemAt: ["$ownerArr.username", 0]
+                        }
+                    }
+                }
+            },
+            {
+                $lookup: {
+                    from: "videolikes",
+                    localField: "video._id",
+                    foreignField: "video",
+                    as: "videolikes"
+                }
+            },
+            {
+                $addFields: {
+                    likes: {
+                        $size: {
+                            $filter: {
+                                input: "$videolikes",
+                                as: "likeObj",
+                                cond: {
+                                    $eq: [true, "$$likeObj.like"]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $unset: ["videoArr", "ownerArr", "videolikes"]
+            }
+        ]
+    )
+    if (!result) {
+        throw new ApiError(500, "something went wrong - getLikedVideos")
+    }
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, result)
         )
 })
