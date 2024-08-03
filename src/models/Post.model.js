@@ -10,8 +10,11 @@ const postSchema = new Schema(
             type: String,
             required: true,
         },
+        title: {
+            type: String
+        },
         media: {
-            type: [String]
+            type: String
         }
     },
     { timestamps: true }

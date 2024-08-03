@@ -3,6 +3,7 @@ import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { Subscription } from "../../models/Subscribe.model.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
+import { ObjectId } from "mongodb";
 
 export const subscribe = asyncHandler(async (req, res) => {
     const { subscriber, channel } = req.body;
@@ -36,4 +37,32 @@ export const subscribe = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(200, result, "Subscribed")
         )
+})
+
+export const getSubscribedChannelVideos = asyncHandler(async (req, res) => {
+    const userId = req.params?.userId;
+    if (!isValidObjectId(userId)) {
+        throw new ApiError(400, "Invalid user id")
+    }
+    // get subscribed channels
+    const subscribedChannels = await Subscription.aggregate(
+        [
+            {
+                $match: {
+                    subscriber: new ObjectId(userId)
+                }
+            },
+            {
+                $limit: 10
+            },
+            {
+                $project: {
+                    channel: 1,
+                    _id: 0
+                }
+            },
+        ]
+    )
+    const channelsArr = subscribedChannels.map(c => new ObjectId(c.channel))
+    res.send(channelsArr)
 })

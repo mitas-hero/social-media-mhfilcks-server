@@ -4,6 +4,7 @@ import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { getIsUserExists, getUserPublicProfile, updateProfile } from "../controllers/user/user.controller.js";
 import { getLikedVideos } from "../controllers/userActions/like.controller.js";
+import { getSubscribedChannelVideos } from "../controllers/userActions/subscription.controller.js";
 
 export const userRouter = Router()
 
@@ -23,3 +24,4 @@ userRouter.route("/update-profile/:email").post(
 userRouter.route("/is-exists/:username").get(getIsUserExists)
 userRouter.route("/public-profile/:channelId").get(getUserPublicProfile)
 userRouter.route("/liked-videos/:userId").get(getLikedVideos)
+userRouter.route("/subscription-videos/:userId").get(getSubscribedChannelVideos)

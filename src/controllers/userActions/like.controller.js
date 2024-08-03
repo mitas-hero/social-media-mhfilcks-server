@@ -96,7 +96,7 @@ export const getLikedVideos = asyncHandler(async (req, res) => {
             {
                 $lookup: {
                     from: "users",
-                    localField: "user",
+                    localField: "video.owner",
                     foreignField: "_id",
                     as: "ownerArr"
                 }
