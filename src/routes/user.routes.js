@@ -2,9 +2,7 @@ import { Router } from "express";
 import { getCurrentUser, registerUser, signInUser, signOutUser } from "../controllers/user/userAuth.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-import { getIsUserExists, getUserPublicProfile, updateProfile } from "../controllers/user/user.controller.js";
-import { getLikedVideos } from "../controllers/userActions/like.controller.js";
-import { getSubscribedChannelVideos } from "../controllers/userActions/subscription.controller.js";
+import { getIsUserExists, getUserData, getUserPublicProfileData, updateProfile } from "../controllers/user/user.controller.js";
 
 export const userRouter = Router()
 
@@ -22,6 +20,5 @@ userRouter.route("/update-profile/:email").post(
 )
 // get a user's public profile
 userRouter.route("/is-exists/:username").get(getIsUserExists)
-userRouter.route("/public-profile/:channelId").get(getUserPublicProfile)
-userRouter.route("/liked-videos/:userId").get(getLikedVideos)
-userRouter.route("/subscription-videos/:userId").get(getSubscribedChannelVideos)
+userRouter.route("/public-profile/:channelId").get(getUserPublicProfileData)
+userRouter.route("/user-data/:userId").get(getUserData)

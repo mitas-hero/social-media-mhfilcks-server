@@ -54,7 +54,7 @@ export const getIsUserExists = asyncHandler(async (req, res) => {
 })
 
 // get a user's public profile data
-export const getUserPublicProfile = asyncHandler(async (req, res) => {
+export const getUserPublicProfileData = asyncHandler(async (req, res) => {
     const channelId = req.params?.channelId;
     const currentUser = req.query?.currentUser;
 
@@ -132,5 +132,77 @@ export const getUserPublicProfile = asyncHandler(async (req, res) => {
         .status(200)
         .json(
             new ApiResponse(200, profile, "user public profile fetched")
+        )
+})
+
+export const getUserData = asyncHandler(async (req, res) => {
+    const userId = req.params?.userId
+    if (!userId || !isValidObjectId(userId)) {
+        throw new ApiError(400, "userId is required and it should be valid object id")
+    }
+    const userData = await User.aggregate(
+        [
+            {
+                $match: {
+                    _id: new ObjectId(userId)
+                }
+            },
+            {
+                $project: {
+                    fullName: 1,
+                    username: 1,
+                    avatar: 1,
+                    coverImage: 1,
+                    createdAt: 1
+                }
+            },
+            {
+                $lookup: {
+                    from: "subscriptions",
+                    localField: "_id",
+                    foreignField: "channel",
+                    as: "subscriptionArr"
+                }
+            },
+            {
+                $lookup: {
+                    from: "videos",
+                    localField: "_id",
+                    foreignField: "owner",
+                    as: "videosArr"
+                }
+            },
+            {
+                $addFields: {
+                    stats: {
+                        subscribers: {
+                            $cond: {
+                                if: { $isArray: "$subscriptionArr" },
+                                then: { $size: "$subscriptionArr" },
+                                else: "NA"
+                            }
+                        },
+                        videos: {
+                            $cond: {
+                                if: { $isArray: "$videosArr" },
+                                then: { $size: "$videosArr" },
+                                else: "NA"
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $unset: ["videosArr", "subscriptionArr"]
+            }
+        ]
+    )
+    if (!userData || userData.length === 0) {
+        throw new ApiError(404, "user data not found")
+    }
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, userData[0])
         )
 })
