@@ -4,6 +4,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { Subscription } from "../../models/Subscribe.model.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
 import { ObjectId } from "mongodb";
+import { Video } from "../../models/video.model.js";
 
 export const subscribe = asyncHandler(async (req, res) => {
     const { subscriber, channel } = req.body;
@@ -44,6 +45,10 @@ export const getSubscribedChannelVideos = asyncHandler(async (req, res) => {
     if (!isValidObjectId(userId)) {
         throw new ApiError(400, "Invalid user id")
     }
+    let limit = parseInt(req?.query?.limit);
+    if (!limit || typeof (limit) !== "number") {
+        throw new ApiError(400, "Must provide limit and it have to be a number")
+    }
     // get subscribed channels
     const subscribedChannels = await Subscription.aggregate(
         [
@@ -63,6 +68,82 @@ export const getSubscribedChannelVideos = asyncHandler(async (req, res) => {
             },
         ]
     )
-    const channelsArr = subscribedChannels.map(c => new ObjectId(c.channel))
-    res.send(channelsArr)
+    // get subscribed channels videos
+    const channelsArr = subscribedChannels.map(c => c.channel);
+    const videos = await Video.aggregate(
+        [
+            {
+                $match: {
+                    owner: {
+                        $in: channelsArr
+                    }
+                }
+            },
+            {
+                $sort: {
+                    _id: -1
+                }
+            },
+            {
+                $limit: limit
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "owner",
+                    foreignField: "_id",
+                    as: "ownerArr"
+                }
+            },
+            {
+                $addFields: {
+                    channel: {
+                        fullName: {
+                            $arrayElemAt: ["$ownerArr.fullName", 0]
+                        },
+                        avatar: {
+                            $arrayElemAt: ["$ownerArr.avatar", 0]
+                        },
+                        username: {
+                            $arrayElemAt: ["$ownerArr.username", 0]
+                        }
+                    }
+                }
+            },
+            {
+                $lookup: {
+                    from: "videolikes",
+                    localField: "_id",
+                    foreignField: "video",
+                    as: "videolikes"
+                }
+            },
+            {
+                $addFields: {
+                    likes: {
+                        $size: {
+                            $filter: {
+                                input: "$videolikes",
+                                as: "likeObj",
+                                cond: {
+                                    $eq: [true, "$$likeObj.like"]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $unset: ["videolikes", "ownerArr", "videos"]
+            }
+        ]
+    )
+    if (!videos) {
+        throw new ApiError(404, "videos not found")
+    }
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, videos, `total videos = ${videos?.length}`)
+        )
 })
