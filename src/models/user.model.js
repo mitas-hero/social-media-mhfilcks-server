@@ -37,6 +37,9 @@ const userSchema = new Schema(
         coverImage: {
             type: String
         },
+        about: {
+            type: String
+        },
         refreshToken: {
             type: String
         },

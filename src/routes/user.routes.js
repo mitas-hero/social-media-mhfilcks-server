@@ -11,7 +11,7 @@ userRouter.route("/register").post(registerUser)
 userRouter.route("/sign-in").post(signInUser)
 userRouter.route("/sign-out").get(verifyJWT, signOutUser)
 userRouter.route("/current-user").get(verifyJWT, getCurrentUser)
-userRouter.route("/update-profile/:email").post(
+userRouter.route("/update-profile/:_id").post(
     upload.fields([
         { name: "avatar", maxCount: 1 },
         { name: "coverImage", maxCount: 1 }
