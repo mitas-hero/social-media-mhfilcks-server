@@ -251,7 +251,7 @@ export const uploadVideo = asyncHandler(async (req, res) => {
 })
 
 // get videos of a channel
-export const getAChannelsVideo = asyncHandler(async (req, res) => {
+export const getAChannelsVideos = asyncHandler(async (req, res) => {
     const username = req.params?.username;
     const userId = await User.findOne({ username }).select("_id")
     if (!userId) {
@@ -266,26 +266,8 @@ export const getAChannelsVideo = asyncHandler(async (req, res) => {
                 }
             },
             {
-                $lookup: {
-                    from: "users",
-                    localField: "owner",
-                    foreignField: "_id",
-                    as: "ownerArr"
-                }
-            },
-            {
-                $addFields: {
-                    channel: {
-                        fullName: {
-                            $arrayElemAt: ["$ownerArr.fullName", 0]
-                        },
-                        avatar: {
-                            $arrayElemAt: ["$ownerArr.avatar", 0]
-                        },
-                        username: {
-                            $arrayElemAt: ["$ownerArr.username", 0]
-                        }
-                    }
+                $sort: {
+                    _id: -1
                 }
             },
             {
@@ -314,15 +296,9 @@ export const getAChannelsVideo = asyncHandler(async (req, res) => {
             {
                 $unset: [
                     "videolikes",
-                    "ownerArr",
                     "video",
                     "description"
                 ]
-            },
-            {
-                $sort: {
-                    _id: -1
-                }
             }
         ]
     )
@@ -335,3 +311,48 @@ export const getAChannelsVideo = asyncHandler(async (req, res) => {
             new ApiResponse(200, videos, "Channels videos fetched")
         )
 })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// draft
+// {
+//     $lookup: {
+//         from: "users",
+//         localField: "owner",
+//         foreignField: "_id",
+//         as: "ownerArr"
+//     }
+// },
+// {
+//     $addFields: {
+//         channel: {
+//             fullName: {
+//                 $arrayElemAt: ["$ownerArr.fullName", 0]
+//             },
+//             avatar: {
+//                 $arrayElemAt: ["$ownerArr.avatar", 0]
+//             },
+//             username: {
+//                 $arrayElemAt: ["$ownerArr.username", 0]
+//             }
+//         }
+//     }
+// },
