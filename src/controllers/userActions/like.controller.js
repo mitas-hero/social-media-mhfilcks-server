@@ -5,7 +5,7 @@ import { PostLike, VideoLike } from "../../models/Like.model.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
 import { ObjectId } from "mongodb";
 
-export const handleLikeVideo = asyncHandler(async (req, res) => {
+export const LikeAVideo = asyncHandler(async (req, res) => {
     const { user, video, like } = req.body;
     // validate all data
     if (!user || !video || (typeof like !== "boolean")) {
@@ -154,7 +154,7 @@ export const getLikedVideos = asyncHandler(async (req, res) => {
         )
 })
 
-export const handleLikePost = asyncHandler(async (req, res) => {
+export const likeAPost = asyncHandler(async (req, res) => {
     const { user, post, like } = req.body;
     if (!user || !post || (typeof like !== "boolean")) {
         throw new ApiError(400, "All fields are required")

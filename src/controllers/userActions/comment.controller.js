@@ -2,7 +2,7 @@ import { isValidObjectId } from "mongoose";
 import { ObjectId } from "mongodb"
 import { ApiError } from "../../utils/apiError.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
-import { VideoComment } from "../../models/Comment.model.js";
+import { PostComment, VideoComment } from "../../models/Comment.model.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
 
 export const commentOnVideo = asyncHandler(async (req, res) => {
@@ -136,5 +136,60 @@ export const getCommentsOfAVideo = asyncHandler(async (req, res) => {
         .status(200)
         .json(
             new ApiResponse(200, result, "comments fetched")
+        )
+})
+
+
+// post related
+// comment on a post
+export const commentOnPost = asyncHandler(async (req, res) => {
+    const { user, post, comment } = req.body;
+    if (!user || !post || !comment) {
+        throw new ApiError(400, "All Fields are required")
+    }
+    if (!isValidObjectId(user) || !isValidObjectId(post)) {
+        throw new ApiError(400, "Invalid ids")
+    }
+    const result = await PostComment.create({ user, post, comment })
+    if (!result) {
+        throw new ApiError(500, "something went wrong - commentOnVideo")
+    }
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, result, "comment success")
+        )
+})
+// update a post's comment
+export const updatePostComment = asyncHandler(async (req, res) => {
+    const commentId = req.params.commentId;
+    const { updatedComment } = req.body;
+    if (!isValidObjectId(commentId)) {
+        throw new ApiError(400, "Invalid id")
+    }
+    const result = await PostComment.findByIdAndUpdate(commentId, { $set: { comment: updatedComment } }, { new: true })
+    if (!result) {
+        throw new ApiError(500, "something went wrong - updateComment")
+    }
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, result, "comment update success")
+        )
+})
+// delete a post's comment
+export const deletePostComment = asyncHandler(async (req, res) => {
+    const commentId = req.params.commentId;
+    if (!isValidObjectId(commentId)) {
+        throw new ApiError(400, "Invalid id")
+    }
+    const result = await PostComment.deleteOne({ _id: new ObjectId(commentId) })
+    if (!result) {
+        throw new ApiError(500, "something went wrong - deletePostComment")
+    }
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, result, "comment delete success")
         )
 })

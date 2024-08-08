@@ -6,6 +6,53 @@ import { Post } from "../../models/Post.model.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
 // import { ObjectId } from "mongodb";
 
+// get posts
+export const getPosts = asyncHandler(async (req, res) => {
+    const posts = await Post.aggregate(
+        [
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "owner",
+                    foreignField: "_id",
+                    as: "ownerArr"
+                }
+            },
+            {
+                $sort: {
+                    _id: -1
+                }
+            },
+            {
+                $addFields: {
+                    channel: {
+                        fullName: {
+                            $arrayElemAt: ["$ownerArr.fullName", 0]
+                        },
+                        avatar: {
+                            $arrayElemAt: ["$ownerArr.avatar", 0]
+                        },
+                        username: {
+                            $arrayElemAt: ["$ownerArr.username", 0]
+                        }
+                    }
+                }
+            },
+            {
+                $unset: ["ownerArr"]
+            }
+        ]
+    )
+    if (!posts) {
+        throw new ApiError(400, "posts not found")
+    }
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, posts, "Posts fetched")
+        )
+})
+
 export const createPost = asyncHandler(async (req, res) => {
     const owner = req.params.userId;
     const { content, title } = req.body;

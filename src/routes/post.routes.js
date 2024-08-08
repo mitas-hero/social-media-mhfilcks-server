@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
-import { createPost, deletePost, updatePost } from "../controllers/posts/post.controller.js";
+import { createPost, deletePost, getPosts, updatePost } from "../controllers/posts/post.controller.js";
 
 export const postRouter = Router()
 
@@ -18,3 +18,4 @@ postRouter.route("/update-post/:id").patch(
     updatePost
 )
 postRouter.route("/delete-post/:id").delete(deletePost)
+postRouter.route("/all-posts").get(getPosts)
