@@ -14,7 +14,10 @@ const postSchema = new Schema(
             type: String
         },
         media: {
-            type: String
+            type: Array
+        },
+        image: {
+            type: Object
         }
     },
     { timestamps: true }

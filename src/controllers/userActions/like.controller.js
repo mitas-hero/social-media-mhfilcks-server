@@ -1,7 +1,7 @@
 import { isValidObjectId } from "mongoose";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../utils/apiError.js";
-import { VideoLike } from "../../models/Like.model.js";
+import { PostLike, VideoLike } from "../../models/Like.model.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
 import { ObjectId } from "mongodb";
 
@@ -151,5 +151,42 @@ export const getLikedVideos = asyncHandler(async (req, res) => {
         .status(200)
         .json(
             new ApiResponse(200, result)
+        )
+})
+
+export const handleLikePost = asyncHandler(async (req, res) => {
+    const { user, post, like } = req.body;
+    if (!user || !post || (typeof like !== "boolean")) {
+        throw new ApiError(400, "All fields are required")
+    }
+    if (!isValidObjectId(user) || !isValidObjectId(post)) {
+        throw new ApiError(400, "Invalid object id")
+    }
+    // check is like document exists with this user and video or not
+    const existedLikeDoc = await PostLike.findOne({ user, post })
+    // if like doc already exists, delete the document;
+    if (existedLikeDoc) {
+        const result = await PostLike.deleteOne({ post: new ObjectId(post), user: new ObjectId(user) })
+        if (!result) {
+            throw new ApiError(400, "Like not deleted")
+        }
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, result, "like removed")
+            )
+    }
+    // if like doc doesn't exists create a new doc 
+    const doc = {
+        post, user, like: true
+    }
+    const result = await PostLike.create(doc)
+    if (!result) {
+        throw new ApiError(400, "something went wrong when creating like doc")
+    }
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, result, "liked this post")
         )
 })

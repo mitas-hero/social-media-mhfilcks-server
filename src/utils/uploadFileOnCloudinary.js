@@ -52,3 +52,15 @@ export const deleteImageFromCloudinary = (url) => {
         console.error("file delete error in cloudinary");
     }
 }
+
+export const deleteImageFromCloudinaryViaPublicId = (publicId) => {
+    try {
+        cloudinary.uploader.destroy(publicId)
+            .then(res => {
+                console.log(res)
+                return res
+            })
+    } catch (err) {
+        console.error("file delete error in cloudinary");
+    }
+}
