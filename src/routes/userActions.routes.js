@@ -2,6 +2,7 @@ import { Router } from "express";
 import { subscribe } from "../controllers/userActions/subscription.controller.js";
 import { handleLikePost, handleLikeVideo } from "../controllers/userActions/like.controller.js";
 import { commentOnVideo, deleteVideoComment, updateVideoComment } from "../controllers/userActions/comment.controller.js";
+import { handleBookmarkPost } from "../controllers/userActions/bookmark.controller.js";
 
 export const userActionsRouter = Router()
 
@@ -12,4 +13,5 @@ userActionsRouter.route("/update-video-comment/:commentId").patch(updateVideoCom
 userActionsRouter.route("/delete-video-comment/:commentId").delete(deleteVideoComment)
 // post related
 userActionsRouter.route("/like-post").post(handleLikePost)
+userActionsRouter.route("/bookmark-post").post(handleBookmarkPost)
 // userActionsRouter.route("/")

@@ -32,7 +32,7 @@ const PostLikeSchema = new Schema(
         },
         post: {
             type: mongoose.Types.ObjectId,
-            ref: "Video",
+            ref: "Post",
             required: true
         },
         like: {
