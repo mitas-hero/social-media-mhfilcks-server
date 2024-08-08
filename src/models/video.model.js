@@ -28,6 +28,9 @@ const videoSchema = new Schema(
         views: {
             type: Number,
             default: 0
+        },
+        assetsDetail: {
+            type: Object,
         }
     },
     { timestamps: true }

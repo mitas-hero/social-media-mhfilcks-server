@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middleware.js";
-import { getVideo, getAVideoPageData, getLikeAndSubscribe, getVideos, uploadVideo, getAChannelsVideos } from "../controllers/video/video.controller.js";
+import { getVideo, getAVideoPageData, getLikeAndSubscribe, getVideos, uploadVideo, getAChannelsVideos, updateVideo } from "../controllers/video/video.controller.js";
 import { countCommentsOfAVideo, getCommentsOfAVideo } from "../controllers/userActions/comment.controller.js";
 import { getLikedVideos } from "../controllers/userActions/like.controller.js";
 import { getSubscribedChannelVideos } from "../controllers/userActions/subscription.controller.js";
@@ -13,6 +13,12 @@ videoRouter.route("/upload-video").post(
         { name: "thumbnail", maxCount: 1 }
     ]),
     uploadVideo
+)
+videoRouter.route("/update-video/:id").post(
+    upload.fields([
+        { name: "thumbnail", maxCount: 1 }
+    ]),
+    updateVideo
 )
 videoRouter.route("/get-video/:id").get(getVideo)
 videoRouter.route("/get-video-page-data/:id").get(getAVideoPageData)

@@ -4,7 +4,7 @@ import { Video } from "../../models/video.model.js";
 import { ApiError } from "../../utils/apiError.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
-import { uploadFileOnCloudinary, uploadVideoOnCloudinary } from "../../utils/uploadFileOnCloudinary.js";
+import { deleteImageFromCloudinary, uploadFileOnCloudinary, uploadVideoOnCloudinary } from "../../utils/uploadFileOnCloudinary.js";
 import { VideoLike } from "../../models/Like.model.js";
 import { Subscription } from "../../models/Subscribe.model.js";
 import { User } from "../../models/user.model.js";
@@ -224,32 +224,6 @@ export const getLikeAndSubscribe = asyncHandler(async (req, res) => {
         )
 })
 
-// upload a video
-export const uploadVideo = asyncHandler(async (req, res) => {
-    const { title, duration, description, owner } = req.body
-    if (!title || !duration || !description || !owner) {
-        throw new ApiError(400, "all fields are required")
-    }
-    if (!req.files?.video || !req.files?.thumbnail) {
-        throw new ApiError(400, "video and thumbnail is required")
-    }
-    const video = await uploadVideoOnCloudinary(req.files.video[0].path)
-    const thumbnail = await uploadFileOnCloudinary(req.files.thumbnail[0].path)
-    // make document
-    const doc = {
-        title, duration, description, owner, video, thumbnail
-    }
-    const result = await Video.create(doc)
-    if (!result) {
-        throw new ApiError(500, "something went wrong when video uploading")
-    }
-    res
-        .status(200)
-        .json(
-            new ApiResponse(200, result, "video created")
-        )
-})
-
 // get videos of a channel
 export const getAChannelsVideos = asyncHandler(async (req, res) => {
     const username = req.params?.username;
@@ -297,7 +271,7 @@ export const getAChannelsVideos = asyncHandler(async (req, res) => {
                 $unset: [
                     "videolikes",
                     "video",
-                    "description"
+                    // "description" 
                 ]
             }
         ]
@@ -312,7 +286,65 @@ export const getAChannelsVideos = asyncHandler(async (req, res) => {
         )
 })
 
-
+// upload a video
+export const uploadVideo = asyncHandler(async (req, res) => {
+    const { title, duration, description, owner } = req.body
+    if (!title || !duration || !description || !owner) {
+        throw new ApiError(400, "all fields are required")
+    }
+    if (!req.files?.video || !req.files?.thumbnail) {
+        throw new ApiError(400, "video and thumbnail is required")
+    }
+    const video = await uploadVideoOnCloudinary(req.files?.video[0]?.path)
+    const thumbnail = await uploadFileOnCloudinary(req.files?.thumbnail[0]?.path)
+    // make document
+    const doc = {
+        title, duration, description, owner, video, thumbnail, assetsDetail: { cloud: "dquqygs9h" }
+    }
+    const result = await Video.create(doc)
+    if (!result) {
+        throw new ApiError(500, "something went wrong when video uploading")
+    }
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, result, "video created")
+        )
+})
+// update a video
+export const updateVideo = asyncHandler(async (req, res) => {
+    const id = req.params?.id;
+    if (!id || !isValidObjectId(id)) {
+        throw new ApiError(400, "invalid user id")
+    }
+    const video = await Video.findById(id)
+    if (!video) {
+        throw new ApiError(404, "video not found")
+    }
+    if (req?.body?.title) {
+        video.title = req?.body?.title
+    }
+    if (req?.body?.description) {
+        video.description = req?.body?.description
+    }
+    if (req?.body?.duration) {
+        video.duration = req?.body?.duration
+    }
+    if (req.files?.thumbnail?.[0]) {
+        deleteImageFromCloudinary(video.thumbnail)
+        video.thumbnail = await uploadFileOnCloudinary(req.files?.thumbnail?.[0]?.path)
+    }
+    const result = await video.save()
+    if (!result) {
+        throw new ApiError(500, "Something went wrong when updating video")
+    }
+    const updatedVideo = await Video.findById(id).select("-video");
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, updateVideo, "video updated")
+        )
+})
 
 
 

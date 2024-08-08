@@ -39,3 +39,16 @@ export const uploadVideoOnCloudinary = async (localFilePath) => {
         fs.unlinkSync(localFilePath)
     }
 }
+
+export const deleteImageFromCloudinary = (url) => {
+    try {
+        const publicId = url.split('/')?.[7]?.split(".")?.[0]
+        cloudinary.uploader.destroy(publicId)
+            .then(res => {
+                console.log(res)
+                return res
+            })
+    } catch (err) {
+        console.error("file delete error in cloudinary");
+    }
+}
