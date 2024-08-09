@@ -11,16 +11,16 @@ export const getPosts = asyncHandler(async (req, res) => {
     const posts = await Post.aggregate(
         [
             {
+                $sort: {
+                    _id: -1
+                }
+            },
+            {
                 $lookup: {
                     from: "users",
                     localField: "owner",
                     foreignField: "_id",
                     as: "ownerArr"
-                }
-            },
-            {
-                $sort: {
-                    _id: -1
                 }
             },
             {
@@ -68,7 +68,7 @@ export const createPost = asyncHandler(async (req, res) => {
         media: []
     }
     if (req.body?.title) {
-        data.title = req.body?.title
+        data.title = title
     }
     if (req.files?.image?.[0]) {
         const uploadResult = await uploadVideoOnCloudinary(req.files?.image?.[0].path)
