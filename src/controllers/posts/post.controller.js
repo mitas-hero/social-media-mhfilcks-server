@@ -4,7 +4,10 @@ import { ApiError } from "../../utils/apiError.js";
 import { deleteImageFromCloudinaryViaPublicId, uploadVideoOnCloudinary } from "../../utils/uploadFileOnCloudinary.js";
 import { Post } from "../../models/Post.model.js";
 import { ApiResponse } from "../../utils/apiResponse.js";
-// import { ObjectId } from "mongodb";
+import { PostLike } from "../../models/Like.model.js";
+import { ObjectId } from "mongodb";
+import { PostBookmark } from "../../models/bookmark.model.js";
+import { PostComment } from "../../models/Comment.model.js";
 
 // get posts
 export const getPosts = asyncHandler(async (req, res) => {
@@ -51,6 +54,51 @@ export const getPosts = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(200, posts, "Posts fetched")
         )
+})
+
+// get a posts stats
+export const getPostStates = asyncHandler(async (req, res) => {
+    const id = req.params?.id;
+    const totalLike = await PostLike.aggregate(
+        [
+            {
+                $match: {
+                    post: new ObjectId(id),
+                    like: true
+                }
+            },
+            {
+                $count: "totalLike"
+            }
+        ]
+    )
+    const totalBookmark = await PostBookmark.aggregate(
+        [
+            {
+                $match: {
+                    post: new ObjectId(id),
+                    bookmark: true
+                }
+            },
+            {
+                $count: "totalBookmark"
+            }
+        ]
+    )
+    const totalComment = await PostComment.aggregate(
+        [
+            {
+                $match: {
+                    post: new ObjectId(id),
+                }
+            },
+            {
+                $count: "totalComment"
+            }
+        ]
+    )
+    res.send({ ...totalLike[0], ...totalBookmark[0], ...totalComment[0] })
+    // res.send({ totalLike, totalBookmark, totalComment })
 })
 
 export const createPost = asyncHandler(async (req, res) => {
