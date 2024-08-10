@@ -8,6 +8,7 @@ import { PostLike } from "../../models/Like.model.js";
 import { ObjectId } from "mongodb";
 import { PostBookmark } from "../../models/bookmark.model.js";
 import { PostComment } from "../../models/Comment.model.js";
+import { Subscription } from "../../models/Subscribe.model.js";
 
 // get posts
 export const getPosts = asyncHandler(async (req, res) => {
@@ -59,6 +60,10 @@ export const getPosts = asyncHandler(async (req, res) => {
 // get a posts stats
 export const getPostStates = asyncHandler(async (req, res) => {
     const id = req.params?.id;
+    const owner = req.query?.owner;
+    if (!id || !owner || !isValidObjectId(id) || !isValidObjectId(owner)) {
+        throw new ApiError(400, "Invalid id")
+    }
     const totalLike = await PostLike.aggregate(
         [
             {
@@ -97,8 +102,41 @@ export const getPostStates = asyncHandler(async (req, res) => {
             }
         ]
     )
-    res.send({ ...totalLike[0], ...totalBookmark[0], ...totalComment[0] })
+    const subscribers = await Subscription.aggregate(
+        [
+            {
+                $match: {
+                    channel: new ObjectId(owner)
+                }
+            },
+            {
+                $count: "subscribers"
+            }
+        ]
+    )
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, { ...totalLike[0], ...totalBookmark[0], ...totalComment[0], ...subscribers[0] }, "Post stats")
+        )
     // res.send({ totalLike, totalBookmark, totalComment })
+})
+// user status about a post
+export const userStatusOfAPost = asyncHandler(async (req, res) => {
+    const post = req.params?.id;
+    const owner = req.query?.owner;
+    const userId = req.query?.userId;
+    if (!userId || !isValidObjectId(userId) || !post || !isValidObjectId(post) || !isValidObjectId(owner)) {
+        throw new ApiError(400, "Invalid id")
+    }
+    const isLiked = await PostLike.exists({ post: new ObjectId(post), user: new ObjectId(userId), like: true })
+    const isBookmarked = await PostBookmark.exists({ post: new ObjectId(post), user: new ObjectId(userId) })
+    const isSubscribed = await Subscription.exists({ subscriber: new ObjectId(userId), channel: new ObjectId(owner) })
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, { isLiked: !!isLiked, isSubscribed: !!isSubscribed, isBookmarked: !!isBookmarked })
+        )
 })
 
 export const createPost = asyncHandler(async (req, res) => {

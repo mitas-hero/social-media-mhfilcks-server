@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { subscribe } from "../controllers/userActions/subscription.controller.js";
 import { likeAPost, LikeAVideo } from "../controllers/userActions/like.controller.js";
-import { commentOnPost, commentOnVideo, deletePostComment, deleteVideoComment, updatePostComment, updateVideoComment } from "../controllers/userActions/comment.controller.js";
+import { commentOnPost, commentOnVideo, deleteVideoComment, updatePostComment, updateVideoComment } from "../controllers/userActions/comment.controller.js";
 import { bookmarkAPost } from "../controllers/userActions/bookmark.controller.js";
 
 export const userActionsRouter = Router()
