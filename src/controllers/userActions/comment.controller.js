@@ -23,7 +23,6 @@ export const commentOnVideo = asyncHandler(async (req, res) => {
             new ApiResponse(200, result, "comment success")
         )
 })
-
 export const updateVideoComment = asyncHandler(async (req, res) => {
     const commentId = req.params.commentId;
     const { updatedComment } = req.body;
@@ -40,7 +39,6 @@ export const updateVideoComment = asyncHandler(async (req, res) => {
             new ApiResponse(200, result, "comment update success")
         )
 })
-
 export const deleteVideoComment = asyncHandler(async (req, res) => {
     const commentId = req.params.commentId;
     if (!isValidObjectId(commentId)) {
@@ -56,7 +54,6 @@ export const deleteVideoComment = asyncHandler(async (req, res) => {
             new ApiResponse(200, result, "comment delete success")
         )
 })
-
 // get total comment count of a video
 export const countCommentsOfAVideo = asyncHandler(async (req, res) => {
     const id = req.params?.id
@@ -79,7 +76,6 @@ export const countCommentsOfAVideo = asyncHandler(async (req, res) => {
             new ApiResponse(200, totalComments[0], "total comments")
         )
 })
-
 // get comments of a video
 export const getCommentsOfAVideo = asyncHandler(async (req, res) => {
     const videoId = req.params?.id;
@@ -191,5 +187,73 @@ export const deletePostComment = asyncHandler(async (req, res) => {
         .status(200)
         .json(
             new ApiResponse(200, result, "comment delete success")
+        )
+})
+// get comments of a video
+export const getCommentsOfAPost = asyncHandler(async (req, res) => {
+    const id = req?.params?.id
+    if (!isValidObjectId(id)) {
+        throw new ApiError("invalid inputs | id")
+    }
+    let limit = 10;
+    if (parseInt(req.query?.limit)) {
+        limit = req.query?.limit
+    }
+    const comments = await PostComment.aggregate(
+        [
+            {
+                $match: {
+                    post: new ObjectId(`${id}`)
+                }
+            },
+            {
+                $limit: limit
+            },
+            {
+                $sort: {
+                    _id: -1
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "user",
+                    foreignField: "_id",
+                    as: "commentatorArr"
+                }
+            },
+            {
+                $addFields: {
+                    commentator: {
+                        fullName: {
+                            $arrayElemAt: [
+                                "$commentatorArr.fullName",
+                                0
+                            ]
+                        },
+                        username: {
+                            $arrayElemAt: [
+                                "$commentatorArr.username",
+                                0
+                            ]
+                        },
+                        avatar: {
+                            $arrayElemAt: [
+                                "$commentatorArr.avatar",
+                                0
+                            ]
+                        }
+                    }
+                }
+            },
+            {
+                $unset: ["commentatorArr"]
+            }
+        ]
+    )
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, comments, "comments fetched")
         )
 })
