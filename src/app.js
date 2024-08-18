@@ -7,7 +7,7 @@ import cookieParser from "cookie-parser";
 export const app = express()
 
 app.use(cors({
-    origin: ["http://localhost:5173", "http://localhost:51734", "https://mhflicks-socialmedia.netlify.app"], credentials: true
+    origin: ["http://localhost:5173", "http://localhost:51734", "https://mhflicks-socialmedia.netlify.app", "https://social-media-mhfilcks-server-production.up.railway.app"], credentials: true
 }));
 app.use(express.json({ limit: '16kb' }));
 app.use(express.static('public'))
